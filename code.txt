@@ -1,0 +1,27 @@
+Map.addLayer(aoi)
+
+var modis=ee.ImageCollection("MODIS/061/MOD11A1")
+.filterDate('2024-01-01','2024-12-31')
+.select('LST_Day_1km')
+
+var modcel=modis.map(function(img){
+  return img
+    .multiply(0.02)
+    .subtract(273.15)
+    .copyProperties(img,['system:time_start'])
+})
+
+var tsc=ui.Chart.image.series({
+  imageCollection:modcel,
+  region:aoi,
+  reducer:ee.Reducer.mean(),
+  scale:1000,
+  xProperty:"system:time_start"})
+    .setOptions({
+      title:"LST temporal analysis",
+      vAxis:{title:'LSTcelcius'}});
+print(tsc)
+
+var mean=modcel.mean().clip(aoi)
+
+Map.addLayer(mean,{},"LST")
